@@ -5,6 +5,7 @@
     "license": "UNLICENSED",
     "main": "index.js",
     "dependencies": {
+        "axios": "^1.7.3",
         "bitcoinjs-lib": "^6.1.0",
         "dotenv": "16.3.1",
         "fs": "0.0.1-security",

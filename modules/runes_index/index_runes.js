@@ -140,7 +140,7 @@ async function main_index() {
     }
 
     if (bitcoin_rpc_user != "") {
-      rpc_argument += " --bitcoin-rpc-username " + bitcoin_rpc_user + " --bitcoin-rpc-password " + bitcoin_rpc_password
+      rpc_argument += " --bitcoin-rpc-username " + bitcoin_rpc_user + " --bitcoin-rpc-password '" + bitcoin_rpc_password + "'"
     }
     let network_argument = ""
     if (network_type == 'signet') {
@@ -158,7 +158,7 @@ async function main_index() {
         console.error("ord-runes version mismatch, please recompile ord-runes via 'cargo build --release' in ord-runes folder.")
         process.exit(1)
       }
-      execSync(ord_index_cmd, {stdio: 'inherit'})
+      execSync(ord_index_cmd, { stdio: 'inherit' })
     }
     catch (err) {
       console.error("ERROR ON ORD!!!")
@@ -169,7 +169,7 @@ async function main_index() {
     }
     process.chdir(current_directory);
     let ord_index_tm = +(new Date()) - ord_index_st_tm
-    
+
     const fileStream = fs.createReadStream(ord_folder + network_folder + "runes_output.txt", { encoding: 'UTF-8' });
     const rl = readline.createInterface({
       input: fileStream,
@@ -181,7 +181,7 @@ async function main_index() {
     }
     let lines_index = fs.readFileSync(ord_folder + network_folder + "runes_output_blocks.txt", "utf8").split('\n')
     if (lines_index.length == 1) {
-      console.log("Nothing new, waiting!!")
+      console.log(`[${new Date().toISOString()}] Nothing new, waiting!!`);
       continue
     }
 
@@ -205,11 +205,11 @@ async function main_index() {
           console.log("Reverted to block_height " + (block_height - 1))
           let reorg_tm = +(new Date()) - reorg_st_tm
           reorg_tm = Math.round(reorg_tm)
-          
+
           await db_pool.query(`INSERT into runes_indexer_reorg_stats
               (reorg_tm, old_block_height, new_block_height)
-              values ($1, $2, $3);`, 
-              [reorg_tm, current_height, block_height - 1])
+              values ($1, $2, $3);`,
+            [reorg_tm, current_height, block_height - 1])
           current_height = Math.min(current_height, block_height - 1)
         }
       }
@@ -226,7 +226,7 @@ async function main_index() {
     for (let i = 0; i < lenlines; i++) {
       let l = lines[i + ioffset]
       if (l.trim() == "") { continue }
-      
+
       let parts = l.split(';')
       if (parts[0] != "cmd") { continue }
       if (parts[2] == "block_start") {
@@ -284,8 +284,8 @@ async function main_index() {
 
       await db_pool.query(`INSERT into runes_indexer_work_stats
           (ord_index_tm, all_tm)
-          values ($1, $2);`, 
-          [ord_index_tm, all_tm])
+          values ($1, $2);`,
+        [ord_index_tm, all_tm])
       continue
     }
 
@@ -310,7 +310,7 @@ async function main_index() {
 
     let current_runes_events_id_q = await db_pool.query(`SELECT coalesce(max(id), -1) as maxid from runes_events;`)
     let current_runes_events_id = parseInt(current_runes_events_id_q.rows[0].maxid) + 1
-    
+
     let ord_sql_query_count = 0
     let new_runes_count = 0
     let updated_runes_count = 0
@@ -321,10 +321,10 @@ async function main_index() {
 
     let max_height = -1
     for (const l of lines_index) {
-      if (l.trim() == '') { continue } 
+      if (l.trim() == '') { continue }
       let parts = l.split(';')
 
-      if (parts[0] != "cmd") { continue } 
+      if (parts[0] != "cmd") { continue }
       if (parts[2] != "new_block") { continue }
       if (parseInt(parts[1]) > max_height) max_height = parseInt(parts[1])
     }
@@ -414,17 +414,17 @@ async function main_index() {
           timestamp = new Date(timestamp * 1000)
           let turbo = parts[16] == 'true'
 
-          if (terms_offset_l != null && parseInt(terms_offset_l) >= (2**53)) {
-            terms_offset_l = 2**53 - 1
+          if (terms_offset_l != null && parseInt(terms_offset_l) >= (2 ** 53)) {
+            terms_offset_l = 2 ** 53 - 1
           }
-          if (terms_offset_h != null && parseInt(terms_offset_h) >= (2**53)) {
-            terms_offset_h = 2**53 - 1
+          if (terms_offset_h != null && parseInt(terms_offset_h) >= (2 ** 53)) {
+            terms_offset_h = 2 ** 53 - 1
           }
-          if (terms_height_l != null && parseInt(terms_height_l) >= (2**53)) {
-            terms_height_l = 2**53 - 1
+          if (terms_height_l != null && parseInt(terms_height_l) >= (2 ** 53)) {
+            terms_height_l = 2 ** 53 - 1
           }
-          if (terms_height_h != null && parseInt(terms_height_h) >= (2**53)) {
-            terms_height_h = 2**53 - 1
+          if (terms_height_h != null && parseInt(terms_height_h) >= (2 ** 53)) {
+            terms_height_h = 2 ** 53 - 1
           }
 
           running_promises.push(execute_on_db(sql_query_id_to_entry_insert, [rune_id, rune_block, burned, divisibility, etching
@@ -451,7 +451,7 @@ async function main_index() {
               i -= 1
             }
           }
-          delayed_queries.push([1, sql_query_id_to_entry_update, [burned, mints,  block_height, rune_id, block_height]])
+          delayed_queries.push([1, sql_query_id_to_entry_update, [burned, mints, block_height, rune_id, block_height]])
 
           running_promises.push(execute_on_db(sql_query_id_to_entry_changes_insert, [rune_id, burned, mints, block_height]))
           added_entry_history_count += 1
@@ -526,7 +526,7 @@ async function main_index() {
     }
     await Promise.all(running_promises)
     running_promises = []
-    
+
     for (const query of delayed_queries) {
       idx += 1
       if (idx % 10000 == 0) console.log(idx + " / " + lines.length)
@@ -541,16 +541,16 @@ async function main_index() {
       else if (query[0] == 1) updated_runes_count += 1
       ord_sql_query_count += 1
     }
-    
+
     await Promise.all(running_promises)
     running_promises = []
 
     let to_be_inserted_hashes = {}
     for (const l of lines_index) {
-      if (l.trim() == '') { continue } 
+      if (l.trim() == '') { continue }
       let parts = l.split(';')
 
-      if (parts[0] != "cmd") { continue } 
+      if (parts[0] != "cmd") { continue }
       if (parts[2] != "new_block") { continue }
 
       let block_height = parseInt(parts[1])
@@ -569,7 +569,7 @@ async function main_index() {
       let blocktime = to_be_inserted_hashes[k][1]
       await db_pool.query(`INSERT into runes_block_hashes (block_height, block_hash, block_time) values ($1, $2, $3) ON CONFLICT (block_height) DO NOTHING;`, [block_height, blockhash, blocktime])
     }
-    
+
     let ord_sql_tm = +(new Date()) - ord_sql_st_tm
 
     console.log("Updating Log Files")
@@ -581,17 +581,17 @@ async function main_index() {
     ord_index_tm = Math.round(ord_index_tm)
     ord_sql_tm = Math.round(ord_sql_tm)
     update_log_tm = Math.round(update_log_tm)
-    
+
     let all_tm = +(new Date()) - start_tm
     all_tm = Math.round(all_tm)
 
     await db_pool.query(`INSERT into runes_indexer_work_stats
       (main_min_block_height, main_max_block_height, ord_sql_query_count, new_runes_count, updated_runes_count, 
         new_balances_count, removed_balances_count, added_entry_history_count, added_event_count, ord_index_tm, ord_sql_tm, update_log_tm, all_tm)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`, 
-        [main_min_block_height, main_max_block_height, ord_sql_query_count, new_runes_count, updated_runes_count,
-          new_balances_count, removed_balances_count, added_entry_history_count, added_event_count, ord_index_tm, ord_sql_tm, update_log_tm, all_tm])
-    
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`,
+      [main_min_block_height, main_max_block_height, ord_sql_query_count, new_runes_count, updated_runes_count,
+        new_balances_count, removed_balances_count, added_entry_history_count, added_event_count, ord_index_tm, ord_sql_tm, update_log_tm, all_tm])
+
     console.log("ALL DONE")
   }
 }
@@ -665,7 +665,7 @@ async function update_cumulative_block_hashes(until_height, to_be_inserted_hashe
         let block_hash_q = await db_pool.query(`select block_hash from runes_block_hashes where block_height = $1;`, [height])
         block_hash = block_hash_q.rows[0].block_hash
       }
-      
+
       let to_send = {
         "name": report_name,
         "type": "runes",
@@ -693,10 +693,17 @@ async function get_info_and_insert_event(query, txid, outpoint, rune_id, amount,
     pkscript = current_outpoint_to_pkscript_wallet_map[outpoint][0]
     wallet_addr = current_outpoint_to_pkscript_wallet_map[outpoint][1]
   } else {
-    let outpoint_info_q = await db_pool.query(`SELECT pkscript, wallet_addr from runes_outpoint_to_balances where outpoint = $1;`, [outpoint])
-    pkscript = outpoint_info_q.rows[0].pkscript
-    wallet_addr = outpoint_info_q.rows[0].wallet_addr
-    current_outpoint_to_pkscript_wallet_map[outpoint] = [pkscript, wallet_addr]
+    try {
+      let outpoint_info_q = await db_pool.query(`SELECT pkscript, wallet_addr from runes_outpoint_to_balances where outpoint = $1;`, [outpoint])
+      pkscript = outpoint_info_q.rows[0].pkscript
+      wallet_addr = outpoint_info_q.rows[0].wallet_addr
+      current_outpoint_to_pkscript_wallet_map[outpoint] = [pkscript, wallet_addr]
+    } catch (err) {
+      console.log("get_info_and_insert_event() pkscript not found for outpoint: " + outpoint)
+      console.error("pkscript not found for outpoint: " + outpoint)
+      return
+    }
+
   }
 
   if (pkscript == null) {
@@ -857,7 +864,7 @@ async function check_db() {
     handle_reorg(current_height + 1)
   }
 
-  
+
 
   // initialise mainnet with seed rune
   if (network_type == "mainnet") {
@@ -875,12 +882,21 @@ async function check_db() {
                                                           "timestamp", turbo, genesis_height, last_updated_block_height) values ($1, $2, $3, $4, $5,
                                                           $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
                                                           $19, $20, $21);`,
-                          [seed_rune_id, 1, 0, 0, "0000000000000000000000000000000000000000000000000000000000000000",
-                          1, "340282366920938463463374607431768211455", 840000, 1050000, null, null,
-                          0, 0, 0, "UNCOMMONGOODS", 128, "⧉",
-                          new Date(0), true, 1, 1])
+        [seed_rune_id, 1, 0, 0, "0000000000000000000000000000000000000000000000000000000000000000",
+          1, "340282366920938463463374607431768211455", 840000, 1050000, null, null,
+          0, 0, 0, "UNCOMMONGOODS", 128, "⧉",
+          new Date(0), true, 1, 1])
     }
   }
 }
+
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log("Unhandled Rejection, reason:", reason);
+})
+process.on('uncaughtException', (reason) => {
+  console.log("Unhandled Exception, reason:", reason);
+})
+
 
 main_index()
