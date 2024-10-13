@@ -244,6 +244,7 @@ const indexBlocks = async () => {
             const latestBlockHeight = await getLastBlockHeight();
             if (blockStart >= latestBlockHeight) {
                 console.log(`[${new Date().toISOString()}] No new blocks to index(` + blockStart + " >= " + latestBlockHeight + ")");
+                await new Promise(res => setTimeout(res, 10000)); // sleep 10 seconds
                 continue;
             } else {
                 for (let i = blockStart; i <= latestBlockHeight; i++) {
